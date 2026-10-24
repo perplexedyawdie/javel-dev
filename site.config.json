@@ -1,0 +1,27 @@
+{
+  "name": "Javel Rowe",
+  "tagline": "DevOps engineer",
+  "url": "https://javel.dev",
+  "description": "DevOps engineer writing about Kubernetes, CI/CD, infrastructure as code, and keeping production boring.",
+  "bio": "I'm a DevOps engineer who builds and runs reliable infrastructure. I write about Kubernetes, CI/CD, infrastructure as code, and the occasional production incident.",
+  "avatar": "/avatar.jpg",
+  "language": "en",
+  "socials": [
+    {
+      "label": "GitHub",
+      "url": "https://github.com/perplexedyawdie"
+    },
+    {
+      "label": "LinkedIn",
+      "url": "https://www.linkedin.com/in/javel-rowe/"
+    },
+    {
+      "label": "DEV",
+      "url": "https://dev.to/cloudkungfu"
+    },
+    {
+      "label": "Devpost",
+      "url": "https://devpost.com/perplexedyawdie"
+    }
+  ]
+}
