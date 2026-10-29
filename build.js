@@ -5,7 +5,8 @@ import { marked } from 'marked';
 import { markedHighlight } from 'marked-highlight';
 import hljs from 'highlight.js';
 import { layout, postBody, homeBody, blogIndexBody, notFoundBody, esc } from './templates.js';
-import { renderCard } from './og.js';
+import sharp from 'sharp';
+import { renderCard, renderIcon } from './og.js';
 
 const site = JSON.parse(fs.readFileSync('site.config.json', 'utf8'));
 site.url = site.url.replace(/\/$/, '');
@@ -100,9 +101,48 @@ for (const p of posts.filter((p) => !p.image)) {
   p.image = `/og/${p.slug}.png`;
 }
 
+// icons: PNG/ICO favicons (Google ignores SVG), apple-touch-icon, web manifest
+const radius = (size) => Math.round(size / 4);
+const ico = (pngs) => {
+  const head = Buffer.alloc(6 + 16 * pngs.length);
+  head.writeUInt16LE(1, 2);
+  head.writeUInt16LE(pngs.length, 4);
+  let offset = head.length;
+  pngs.forEach(({ size, data }, i) => {
+    const e = 6 + 16 * i;
+    head.writeUInt8(size, e);
+    head.writeUInt8(size, e + 1);
+    head.writeUInt16LE(1, e + 4);
+    head.writeUInt16LE(32, e + 6);
+    head.writeUInt32LE(data.length, e + 8);
+    head.writeUInt32LE(offset, e + 12);
+    offset += data.length;
+  });
+  return Buffer.concat([head, ...pngs.map((p) => p.data)]);
+};
+write('favicon.ico', ico(await Promise.all([32, 48].map(async (size) => ({ size, data: await renderIcon(size, { radius: radius(size) }) })))));
+write('favicon-96x96.png', await renderIcon(96, { radius: radius(96) }));
+write('apple-touch-icon.png', await renderIcon(180));
+for (const size of [192, 512]) write(`icon-${size}.png`, await renderIcon(size));
+write('site.webmanifest', JSON.stringify({
+  name: site.name,
+  short_name: site.name,
+  start_url: '/',
+  display: 'minimal-ui',
+  background_color: '#18181b',
+  theme_color: '#18181b',
+  icons: [192, 512].map((size) => ({ src: `/icon-${size}.png`, sizes: `${size}x${size}`, type: 'image/png' })),
+}, null, 2));
+
+// avatar at 1x/2x/3x of its 96px display size, so the home page doesn't download the full photo
+const avatarBase = site.avatar.replace(/\.\w+$/, '');
+for (const size of [96, 192, 288]) {
+  write(`${avatarBase}-${size}.webp`, await sharp('public' + site.avatar).resize(size, size).webp({ quality: 80 }).toBuffer());
+}
+
 write('index.html', layout(site, {
   path: '/',
-  title: site.name,
+  title: site.title,
   description: site.description,
   image: '/og/site.png',
   body: homeBody(site, posts.slice(0, 3)),

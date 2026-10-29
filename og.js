@@ -71,3 +71,13 @@ export async function renderCard(site, { title, readingTime } = {}) {
   const svg = await satori(tree, { width: 1200, height: 630, fonts });
   return new Resvg(svg).render().asPng();
 }
+
+// square site icon (same design as public/favicon.svg) drawn with Inter so it renders the same everywhere
+export async function renderIcon(size, { radius = 0 } = {}) {
+  const tree = h('div', {
+    width: size, height: size, alignItems: 'center', justifyContent: 'center', borderRadius: radius,
+    backgroundColor: '#18181b', color: '#fff', fontFamily: 'Inter', fontSize: size / 2, fontWeight: 700, lineHeight: 1,
+  }, 'J');
+  const svg = await satori(tree, { width: size, height: size, fonts });
+  return new Resvg(svg).render().asPng();
+}

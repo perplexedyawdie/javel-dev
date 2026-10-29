@@ -18,7 +18,8 @@ for (const target of ['posts', 'public', 'templates.js', 'og.js', 'build.js', 's
 }
 
 const types = { '.html': 'text/html', '.css': 'text/css', '.xml': 'application/xml', '.svg': 'image/svg+xml',
-  '.jpg': 'image/jpeg', '.png': 'image/png', '.txt': 'text/plain' };
+  '.jpg': 'image/jpeg', '.png': 'image/png', '.txt': 'text/plain', '.webp': 'image/webp', '.ico': 'image/x-icon',
+  '.webmanifest': 'application/manifest+json' };
 
 http.createServer((req, res) => {
   let file = path.join('dist', decodeURIComponent(new URL(req.url, 'http://x').pathname));

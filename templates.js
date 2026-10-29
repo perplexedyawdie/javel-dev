@@ -8,7 +8,7 @@ const link = 'underline-offset-4 hover:underline';
 
 export function layout(site, page) {
   const url = site.url + page.path;
-  const fullTitle = page.path === '/' ? `${site.name} · ${site.tagline}` : `${page.title} · ${site.name}`;
+  const fullTitle = page.path === '/' ? page.title : `${page.title} · ${site.name}`;
   const img = page.image || '/og/site.png';
   const image = img.startsWith('http') ? img : site.url + img;
   const card = img.startsWith('/og/');
@@ -25,6 +25,7 @@ export function layout(site, page) {
 <meta name="robots" content="${page.noindex ? 'noindex' : 'index, follow, max-image-preview:large'}">
 <link rel="canonical" href="${esc(url)}">
 <meta property="og:site_name" content="${esc(site.name)}">
+<meta property="og:locale" content="${esc(site.locale)}">
 <meta property="og:type" content="${page.type === 'article' ? 'article' : 'website'}">
 <meta property="og:title" content="${esc(page.title)}">
 <meta property="og:description" content="${esc(page.description)}">
@@ -36,7 +37,11 @@ ${card ? '<meta property="og:image:width" content="1200">\n<meta property="og:im
 <meta name="twitter:description" content="${esc(page.description)}">
 <meta name="twitter:image" content="${esc(image)}">
 <link rel="alternate" type="application/rss+xml" title="${esc(site.name)}" href="/feed.xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-96x96.png" type="image/png" sizes="96x96">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
 <meta name="theme-color" content="#18181b">
 <link rel="stylesheet" href="/styles.css">
 <script type="application/ld+json">${jsonld}</script>
@@ -82,8 +87,9 @@ export function homeBody(site, latest) {
   const socials = site.socials
     .map((s) => `<a href="${esc(s.url)}" rel="me noopener" class="${link} text-zinc-900 dark:text-zinc-100">${esc(s.label)}</a>`)
     .join('\n      ');
+  const avatar = (size) => esc(`${site.avatar.replace(/\.\w+$/, '')}-${size}.webp`);
   return `    <section class="flex items-center gap-5">
-      <img src="${esc(site.avatar)}" alt="Photo of ${esc(site.name)}" width="96" height="96" class="h-24 w-24 rounded-full object-cover">
+      <img src="${avatar(192)}" srcset="${avatar(96)} 1x, ${avatar(192)} 2x, ${avatar(288)} 3x" alt="Photo of ${esc(site.name)}" width="96" height="96" class="h-24 w-24 rounded-full object-cover">
       <div>
         <h1 class="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">${esc(site.name)}</h1>
         <p class="text-zinc-500">${esc(site.tagline)}</p>
