@@ -10,7 +10,7 @@ build();
 spawn('npx', ['tailwindcss', '-i', 'src/styles.css', '-o', 'dist/styles.css', '--watch'], { stdio: 'inherit' });
 
 let timer;
-for (const target of ['posts', 'public', 'templates.js', 'build.js', 'site.config.json']) {
+for (const target of ['posts', 'public', 'templates.js', 'og.js', 'build.js', 'site.config.json']) {
   fs.watch(target, { recursive: true }, () => {
     clearTimeout(timer);
     timer = setTimeout(build, 100);
