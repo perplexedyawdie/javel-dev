@@ -1,5 +1,6 @@
 {
   "name": "Javel Rowe",
+  "title": "Javel Rowe · DevOps · Coffee & Kanban · Formula 1 · Running",
   "tagline": "DevOps engineer",
   "motto": "Taking over the world with Coffee & Kanban",
   "cta": { "site": "Let's Brew", "post": "Take a Coffee Break" },
@@ -8,6 +9,7 @@
   "bio": "I'm a DevOps engineer who builds and runs reliable infrastructure. I write about Kubernetes, CI/CD, infrastructure as code, and the occasional production incident.",
   "avatar": "/avatar.jpg",
   "language": "en",
+  "locale": "en_US",
   "socials": [
     {
       "label": "GitHub",
