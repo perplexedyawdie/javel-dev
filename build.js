@@ -96,7 +96,7 @@ if (fs.existsSync('public')) fs.cpSync('public', DIST, { recursive: true });
 // social preview cards: one for the site, one per post unless front matter sets `image`
 write('og/site.png', await renderCard(site));
 for (const p of posts.filter((p) => !p.image)) {
-  write(`og/${p.slug}.png`, await renderCard(site, { title: p.title }));
+  write(`og/${p.slug}.png`, await renderCard(site, { title: p.title, readingTime: p.readingTime }));
   p.image = `/og/${p.slug}.png`;
 }
 

@@ -23,17 +23,30 @@ const texture = 'data:image/svg+xml;base64,' + Buffer.from(`<svg xmlns="http://w
 </g></pattern></defs>
 <rect width="1200" height="630" fill="url(#p)" opacity="0.1"/></svg>`).toString('base64');
 
+// button-style call to action that sits under the headline
+const cupIcon = 'data:image/svg+xml;base64,' + Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="${c.bg}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${cup}</svg>`).toString('base64');
+const pill = (children) => h('div', {
+  alignSelf: 'flex-start', alignItems: 'center', marginTop: 36, padding: '14px 32px 14px 24px',
+  borderRadius: 9999, backgroundColor: c.text, color: c.bg, fontSize: 28, fontWeight: 600,
+}, [{ type: 'img', props: { src: cupIcon, width: 32, height: 32, style: { marginRight: 14 } } }, ...children]);
+
 let avatar;
 const titleSize = (t) => (t.length <= 40 ? 72 : t.length <= 70 ? 60 : 50);
 const bare = (url) => url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
 
 // 1200×630 PNG preview card; with no title it's the site-wide card
-export async function renderCard(site, { title } = {}) {
+export async function renderCard(site, { title, readingTime } = {}) {
   avatar ??= `data:image/jpeg;base64,${fs.readFileSync('public' + site.avatar).toString('base64')}`;
   // post cards: title up top, motto in the footer; site card: motto up top, socials in the footer
-  const headline = title
-    ? h('div', { fontSize: titleSize(title), fontWeight: 700, color: c.text, lineHeight: 1.15, letterSpacing: '-0.02em' }, title)
-    : h('div', { fontSize: 80, fontWeight: 700, color: c.text, lineHeight: 1.1, letterSpacing: '-0.025em' }, site.motto);
+  const headline = h('div', { flexDirection: 'column' }, title
+    ? [
+        h('div', { fontSize: titleSize(title), fontWeight: 700, color: c.text, lineHeight: 1.15, letterSpacing: '-0.02em' }, title),
+        pill([h('div', {}, site.cta.post), h('div', { marginLeft: 12, color: c.label, fontWeight: 400 }, `· ${readingTime} min read`)]),
+      ]
+    : [
+        h('div', { fontSize: 80, fontWeight: 700, color: c.text, lineHeight: 1.1, letterSpacing: '-0.025em' }, site.motto),
+        pill([h('div', {}, site.cta.site)]),
+      ]);
   const footer = title
     ? [h('div', { fontSize: 30, color: c.muted }, site.motto)]
     : site.socials.filter((s) => s.onCard).map((s) => h('div', { alignItems: 'baseline', fontSize: 30 }, [
