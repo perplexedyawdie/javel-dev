@@ -9,9 +9,9 @@ const link = 'underline-offset-4 hover:underline';
 export function layout(site, page) {
   const url = site.url + page.path;
   const fullTitle = page.path === '/' ? `${site.name} · ${site.tagline}` : `${page.title} · ${site.name}`;
-  const image = page.image
-    ? (page.image.startsWith('http') ? page.image : site.url + page.image)
-    : site.url + site.avatar;
+  const img = page.image || '/og/site.png';
+  const image = img.startsWith('http') ? img : site.url + img;
+  const card = img.startsWith('/og/');
   const jsonld = JSON.stringify(page.jsonld).replace(/</g, '\\u003c');
 
   return `<!doctype html>
@@ -30,7 +30,8 @@ export function layout(site, page) {
 <meta property="og:description" content="${esc(page.description)}">
 <meta property="og:url" content="${esc(url)}">
 <meta property="og:image" content="${esc(image)}">
-${page.type === 'article' ? `<meta property="article:published_time" content="${page.date.toISOString()}">\n` : ''}<meta name="twitter:card" content="${page.image ? 'summary_large_image' : 'summary'}">
+<meta property="og:image:alt" content="${esc(`${page.title} · ${site.motto}`)}">
+${card ? '<meta property="og:image:width" content="1200">\n<meta property="og:image:height" content="630">\n' : ''}${page.type === 'article' ? `<meta property="article:published_time" content="${page.date.toISOString()}">\n` : ''}<meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${esc(page.title)}">
 <meta name="twitter:description" content="${esc(page.description)}">
 <meta name="twitter:image" content="${esc(image)}">

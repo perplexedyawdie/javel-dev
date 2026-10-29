@@ -1,6 +1,7 @@
 {
   "name": "Javel Rowe",
   "tagline": "DevOps engineer",
+  "motto": "Taking over the world with Coffee & Kanban",
   "url": "https://javel.dev",
   "description": "DevOps engineer writing about Kubernetes, CI/CD, infrastructure as code, and keeping production boring.",
   "bio": "I'm a DevOps engineer who builds and runs reliable infrastructure. I write about Kubernetes, CI/CD, infrastructure as code, and the occasional production incident.",
@@ -13,7 +14,8 @@
     },
     {
       "label": "LinkedIn",
-      "url": "https://www.linkedin.com/in/javel-rowe/"
+      "url": "https://www.linkedin.com/in/javel-rowe/",
+      "onCard": true
     },
     {
       "label": "DEV",

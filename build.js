@@ -5,6 +5,7 @@ import { marked } from 'marked';
 import { markedHighlight } from 'marked-highlight';
 import hljs from 'highlight.js';
 import { layout, postBody, homeBody, blogIndexBody, notFoundBody, esc } from './templates.js';
+import { renderCard } from './og.js';
 
 const site = JSON.parse(fs.readFileSync('site.config.json', 'utf8'));
 site.url = site.url.replace(/\/$/, '');
@@ -92,10 +93,18 @@ fs.mkdirSync(DIST, { recursive: true });
 for (const e of fs.readdirSync(DIST)) if (e !== 'styles.css') fs.rmSync(path.join(DIST, e), { recursive: true });
 if (fs.existsSync('public')) fs.cpSync('public', DIST, { recursive: true });
 
+// social preview cards: one for the site, one per post unless front matter sets `image`
+write('og/site.png', await renderCard(site));
+for (const p of posts.filter((p) => !p.image)) {
+  write(`og/${p.slug}.png`, await renderCard(site, { title: p.title }));
+  p.image = `/og/${p.slug}.png`;
+}
+
 write('index.html', layout(site, {
   path: '/',
   title: site.name,
   description: site.description,
+  image: '/og/site.png',
   body: homeBody(site, posts.slice(0, 3)),
   jsonld: { '@context': 'https://schema.org', '@graph': [
     person,
@@ -107,6 +116,7 @@ write('blog/index.html', layout(site, {
   path: '/blog/',
   title: 'Blog',
   description: `Posts by ${site.name}. ${site.description}`,
+  image: '/og/site.png',
   body: blogIndexBody(posts),
   jsonld: { '@context': 'https://schema.org', '@type': 'Blog', name: `${site.name} — Blog`, url: `${site.url}/blog/`, author: person },
 }));
@@ -137,7 +147,7 @@ for (const p of posts) {
 }
 
 write('404.html', layout(site, {
-  path: '/404.html', title: 'Page not found', description: 'Page not found.', noindex: true,
+  path: '/404.html', title: 'Page not found', description: 'Page not found.', noindex: true, image: '/og/site.png',
   body: notFoundBody, jsonld: { '@context': 'https://schema.org', '@type': 'WebPage', name: 'Page not found' },
 }));
 
