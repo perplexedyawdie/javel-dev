@@ -25,6 +25,12 @@
   background: #ff5555;
   box-shadow: 1.25rem 0 #f1fa8c, 2.5rem 0 #50fa7b;
 }
+/* wrap long commands instead of scrolling; continuation lines hang under the text after `$ ` */
+.prose pre:has(> code.language-bash, > code.language-sh, > code.language-shell, > code.language-console) > code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.prose pre .line { display: block; padding-left: 2ch; text-indent: -2ch; }
 .hljs-prompt { color: #50fa7b; font-weight: 700; user-select: none; }
 .hljs-output { color: #f8f8f2; }
 .hljs-comment, .hljs-quote, .hljs-meta { color: #6272a4; font-style: italic; }

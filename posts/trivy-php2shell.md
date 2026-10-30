@@ -218,3 +218,5 @@ $ docker run --rm -v "$PWD/scenarios/c7-filters/.trivyignore:/.trivyignore" -v /
 
 
 If all these conditions are met, then Trivy will be able to effectively evaluate the vulnerability status of a package.
+
+Want to see it for yourself? The full lab is on GitHub: [detecting-php2shell-with-trivy](https://github.com/perplexedyawdie/detecting-php2shell-with-trivy). Spin it up and try each scenario in a real environment.

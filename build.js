@@ -21,11 +21,12 @@ marked.use(
   markedHighlight({
     langPrefix: 'hljs language-',
     highlight: (code, lang) => {
-      // terminal sessions: highlight `$ ` command lines as bash, leave their output as plain text
+      // terminal sessions: highlight `$ ` command lines as bash, leave their output as plain text.
+      // each line is its own block so long lines can wrap with a hanging indent (see styles.css)
       if (/^(bash|sh|shell|console)$/.test(lang) && /^\$ /m.test(code)) {
-        return code.split('\n').map((l) => l.startsWith('$ ')
+        return code.split('\n').map((l) => `<span class="line">${l.startsWith('$ ')
           ? `<span class="hljs-prompt">$</span> ${hljs.highlight(l.slice(2), { language: 'bash' }).value}`
-          : `<span class="hljs-output">${esc(l)}</span>`).join('\n');
+          : `<span class="hljs-output">${esc(l) || '&#8203;'}</span>`}</span>`).join('');
       }
       return hljs.highlight(code, { language: hljs.getLanguage(lang) ? lang : 'plaintext' }).value;
     },
