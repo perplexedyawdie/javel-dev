@@ -54,7 +54,7 @@ No OS package is detected. Make sure you haven't deleted any files that contain 
 
 ![](/blog/trivy-php2shell/image-3.png)
 
-A security advisory feed is published for each distro and it’s associated release. Trivy pulls this data to know which source packages to match against what’s captured in the SBOM.
+A security advisory feed is published for each distro and its associated release. Trivy pulls this data to know which source packages to match against what’s captured in the SBOM.
 
 This is what it looks like:
 ```bash
@@ -83,7 +83,7 @@ $ trivy image -q -f json php2shell:c2-broken | grep -c '"VulnerabilityID": "CVE-
 
 ![](/blog/trivy-php2shell/image-4.png)
 
-Packages can either be installed from local sources, pulled from official distro owned repos or 3rd pary repos. Trivy scans packages that are sourced from distro owned repos. On Ubuntu, it determines this by checking if the specified Maintainer exists on a provided deny list.
+Packages can either be installed from local sources, pulled from official distro owned repos or 3rd party repos. Trivy scans packages that are sourced from distro owned repos. On Ubuntu, it determines this by checking if the specified Maintainer exists on a provided deny list.
 
 Here’s what that looks like:
 ```bash
@@ -112,7 +112,7 @@ $ trivy image -q -f json php2shell:c3-broken | grep -c '"VulnerabilityID": "CVE-
 
 ![](/blog/trivy-php2shell/image-5.png)
 
-Advisory releases are updated with CVE’s until they reach end of life. Trivy will flag all relevant CVE’s detected using the advisory release associated with the distro. In this case, since Ubuntu 24.10 is EOL, it does not contain an updated list of CVE’s and this, PHP2SHELL would not be detected there.
+Advisory releases are updated with CVEs until they reach end of life. Trivy will flag all relevant CVEs detected using the advisory release associated with the distro. In this case, since Ubuntu 24.10 is EOL, it does not contain an updated list of CVEs and thus, PHP2SHELL would not be detected there.
 
 This is what that looks like:
 ```bash
