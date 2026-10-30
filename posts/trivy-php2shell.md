@@ -19,8 +19,35 @@ Trivy only detects packages that are recorded in the package DB. Packages can be
 - if the package DB was removed from the image
 
 Here’s what this looks like in practice:
-
-![Terminal: What packages are in the image?](/blog/trivy-php2shell/c1.webp)
+```bash
+$ # holds: php8.3 installed from .deb, so dpkg knows about it
+$ docker compose exec c1-holds php -v | head -1
+PHP 8.3.6 (cli) (built: Oct  7 2026 18:06:38) (NTS)
+$ docker compose exec c1-holds dpkg -l 'php8.3*' | awk '/^ii/ {print $2, $3}'
+php8.3-cli 8.3.6-0ubuntu0.24.04.12
+php8.3-common 8.3.6-0ubuntu0.24.04.12
+php8.3-opcache 8.3.6-0ubuntu0.24.04.12
+php8.3-readline 8.3.6-0ubuntu0.24.04.12
+$ trivy image -q --list-all-pkgs -f json php2shell:c1-holds | jq -r '.Results[].Packages[].Name' | grep php
+php-common
+php8.3-cli
+php8.3-common
+php8.3-opcache
+php8.3-readline
+$ # broken: same PHP built from source, dpkg never hears about it
+$ docker compose exec c1-broken-source php -v | head -1
+PHP 8.3.6 (cli) (built: Oct 30 2026 12:58:49) (NTS)
+$ docker compose exec c1-broken-source dpkg -l 'php8.3*'
+dpkg-query: no packages found matching php8.3*
+$ trivy image -q --list-all-pkgs -f json php2shell:c1-broken-source | jq -r '.Results[].Packages[].Name' | grep php
+$ # broken: installed from .deb, then /var/lib/dpkg deleted
+$ docker compose exec c1-broken-no-db php -v | head -1
+PHP 8.3.6 (cli) (built: Oct  7 2026 18:06:38) (NTS)
+$ docker compose exec c1-broken-no-db dpkg -l 'php8.3*'
+dpkg-query: no packages found matching php8.3*
+$ trivy image php2shell:c1-broken-no-db 2>&1 | grep -o 'No OS package is detected.*'
+No OS package is detected. Make sure you haven't deleted any files that contain information about the installed packages.
+```
 
 
 ## Where does Trivy get CVE data?
@@ -30,8 +57,27 @@ Here’s what this looks like in practice:
 A security advisory feed is published for each distro and it’s associated release. Trivy pulls this data to know which source packages to match against what’s captured in the SBOM.
 
 This is what it looks like:
-
-![Terminal: Where does Trivy get CVE data?](/blog/trivy-php2shell/c2.webp)
+```bash
+$ # holds: os-release says Ubuntu 24.04
+$ docker compose exec c2-holds grep -E '^(ID|VERSION_ID)=' /etc/os-release
+VERSION_ID="24.04"
+ID=ubuntu
+$ trivy image -q -f json php2shell:c2-holds | jq -c .Metadata.OS
+{"Family":"ubuntu","Name":"24.04"}
+$ trivy image -q -f json php2shell:c2-holds | grep -c '"VulnerabilityID": "CVE-2026-109618"'
+4
+$ # broken: os-release says fakeos 1.0, lsb-release and debian_version removed
+$ docker compose exec c2-broken grep -E '^(ID|VERSION_ID)=' /etc/os-release
+ID=fakeos
+VERSION_ID="1.0"
+$ docker compose exec c2-broken ls /etc/lsb-release /etc/debian_version
+ls: cannot access '/etc/lsb-release': No such file or directory
+ls: cannot access '/etc/debian_version': No such file or directory
+$ trivy image -q -f json php2shell:c2-broken | jq -c .Metadata.OS
+{"Family":"none","Name":""}
+$ trivy image -q -f json php2shell:c2-broken | grep -c '"VulnerabilityID": "CVE-2026-109618"'
+0
+```
 
 ## Are all detected packages scanned?
 
@@ -40,8 +86,27 @@ This is what it looks like:
 Packages can either be installed from local sources, pulled from official distro owned repos or 3rd pary repos. Trivy scans packages that are sourced from distro owned repos. On Ubuntu, it determines this by checking if the specified Maintainer exists on a provided deny list.
 
 Here’s what that looks like:
-
-![Terminal: Are all detected packages scanned?](/blog/trivy-php2shell/c3.webp)
+```bash
+$ # holds: php8.3-* maintained by Ubuntu
+$ docker compose exec c3-holds dpkg-query -W -f='${Package}: ${Maintainer}\n' 'php8.3-*' | grep @
+php8.3-cli: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+php8.3-common: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+php8.3-opcache: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+php8.3-readline: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+$ trivy image --debug php2shell:c3-holds 2>&1 | grep -o 'Skipping third-party packages.*'
+$ trivy image -q -f json php2shell:c3-holds | grep -c '"VulnerabilityID": "CVE-2026-109618"'
+4
+$ # broken (simulated): same packages, Maintainer rewritten to Docker's
+$ docker compose exec c3-broken dpkg-query -W -f='${Package}: ${Maintainer}\n' 'php8.3-*' | grep @
+php8.3-cli: Docker <support@docker.com>
+php8.3-common: Docker <support@docker.com>
+php8.3-opcache: Docker <support@docker.com>
+php8.3-readline: Docker <support@docker.com>
+$ trivy image --debug php2shell:c3-broken 2>&1 | grep -o 'Skipping third-party packages.*'
+Skipping third-party packages   packages=[php8.3-cli php8.3-common php8.3-opcache php8.3-readline]
+$ trivy image -q -f json php2shell:c3-broken | grep -c '"VulnerabilityID": "CVE-2026-109618"'
+0
+```
 
 ## When is a package vulnerable?
 
@@ -50,8 +115,28 @@ Here’s what that looks like:
 Advisory releases are updated with CVE’s until they reach end of life. Trivy will flag all relevant CVE’s detected using the advisory release associated with the distro. In this case, since Ubuntu 24.10 is EOL, it does not contain an updated list of CVE’s and this, PHP2SHELL would not be detected there.
 
 This is what that looks like:
-
-![Terminal: When is a package vulnerable?](/blog/trivy-php2shell/c4.webp)
+```bash
+$ # holds: noble (24.04), and the advisory has a noble entry
+$ docker compose exec c4-holds grep VERSION_CODENAME /etc/os-release
+VERSION_CODENAME=noble
+$ docker compose exec c4-holds dpkg-query -W php8.3-cli
+php8.3-cli      8.3.6-0ubuntu0.24.04.12
+$ curl -s https://raw.githubusercontent.com/aquasecurity/vuln-list/main/ubuntu/2026/CVE-2026-109618.json | jq -c '.Patches."php8.3".noble'
+{"Status":"released","Note":"8.3.6-0ubuntu0.24.04.13"}
+$ trivy image -q -f json php2shell:c4-holds | grep -c '"VulnerabilityID": "CVE-2026-109618"'
+4
+$ # broken: oracular (24.10), php8.3 installed, but no oracular entry
+$ docker compose exec c4-broken grep VERSION_CODENAME /etc/os-release
+VERSION_CODENAME=oracular
+$ docker compose exec c4-broken dpkg-query -W php8.3-cli
+php8.3-cli      8.3.11-0ubuntu0.24.10.5
+$ curl -s https://raw.githubusercontent.com/aquasecurity/vuln-list/main/ubuntu/2026/CVE-2026-109618.json | jq -c '.Patches."php8.3".oracular'
+null
+$ trivy image php2shell:c4-broken 2>&1 | grep -o 'This OS version is no longer supported.*'
+This OS version is no longer supported by the distribution      family="ubuntu" version="24.10"
+$ trivy image -q -f json php2shell:c4-broken | grep -c '"VulnerabilityID": "CVE-2026-109618"'
+0
+```
 
 ## How does Trivy tell a vulnerable version from a patched one?
 
@@ -60,8 +145,22 @@ This is what that looks like:
 The security advisory also contains the specific version of a package that is patched and safe to install. If the version number installed on the system is less than the patched version, it will be flagged as vulnerable. In the event that no patched version is available, all versions of the package will be flagged.
 
 Here’s how it looks:
-
-![Terminal: How does Trivy tell a vulnerable version from a patched one?](/blog/trivy-php2shell/c5.webp)
+```bash
+$ # holds: the .12 build from Launchpad
+$ docker compose exec c5-holds dpkg-query -W -f='${Version}\n' php8.3-cli
+8.3.6-0ubuntu0.24.04.12
+$ docker compose exec c5-holds sh -c 'dpkg --compare-versions "$(dpkg-query -W -f="\${Version}" php8.3-cli)" lt 8.3.6-0ubuntu0.24.04.13 && echo below fix || echo at/after fix'
+below fix
+$ trivy image -q -f json php2shell:c5-holds | grep -c '"VulnerabilityID": "CVE-2026-109618"'
+4
+$ # broken: whatever apt installs today (.13)
+$ docker compose exec c5-broken dpkg-query -W -f='${Version}\n' php8.3-cli
+8.3.6-0ubuntu0.24.04.13
+$ docker compose exec c5-broken sh -c 'dpkg --compare-versions "$(dpkg-query -W -f="\${Version}" php8.3-cli)" lt 8.3.6-0ubuntu0.24.04.13 && echo below fix || echo at/after fix'
+at/after fix
+$ trivy image -q -f json php2shell:c5-broken | grep -c '"VulnerabilityID": "CVE-2026-109618"'
+0
+```
 
 ## Where does Trivy keep its CVE data?
 
@@ -70,8 +169,22 @@ Here’s how it looks:
 Trivy uses an offline copy of the CVE data during the scan. This creates the potential for a scenario where a CVE is released before the current data is refreshed. 
 
 This is what that can look like:
-
-![Terminal: Where does Trivy keep its CVE data?](/blog/trivy-php2shell/c6.webp)
+```bash
+$ # holds: today's DB has the advisory
+$ docker run --rm php2shell:stale-db --cache-dir /fresh version | grep UpdatedAt
+  UpdatedAt: 2026-10-30 07:16:25.054174501 +0000 UTC
+$ docker run --rm --entrypoint dbkey php2shell:stale-db get /fresh/db/trivy.db 'ubuntu 24.04' php8.3 CVE-2026-109618
+{"FixedVersion":"8.3.6-0ubuntu0.24.04.13"}
+$ trivy image -q -f json php2shell:c6-holds | grep -c '"VulnerabilityID": "CVE-2026-109618"'
+4
+$ # broken (simulated): a DB from before 21 Oct, same image, --skip-db-update
+$ docker run --rm php2shell:stale-db version | grep UpdatedAt
+  UpdatedAt: 2026-10-20 07:00:00 +0000 UTC
+$ docker run --rm --entrypoint dbkey php2shell:stale-db get /root/.cache/trivy/db/trivy.db 'ubuntu 24.04' php8.3 CVE-2026-109618
+not found
+$ docker run --rm -v /var/run/docker.sock:/var/run/docker.sock php2shell:stale-db image -q -f json --skip-db-update php2shell:c6-holds | grep -c '"VulnerabilityID": "CVE-2026-109618"'
+0
+```
 
 ## Why might a vulnerable package not show up in the report?
 
@@ -86,8 +199,22 @@ Trivy can be configured using flags, environmental variables or policies/ignore 
 - **Skip dirs**: if the location of the pkg DB is defined here, all pkgs will become invisible to Trivy
 
 Here’s what each looks like in practice:
-
-![Terminal: Why might a vulnerable package not show up in the report?](/blog/trivy-php2shell/c7.webp)
+```bash
+$ # holds: default scan, every severity
+$ trivy image -q -f json php2shell:c7-holds | jq -r '.Results[].Vulnerabilities[]? | select(.VulnerabilityID=="CVE-2026-109618") | .Severity' | sort -u
+CRITICAL
+$ trivy image -q -f json php2shell:c7-holds | grep -c '"VulnerabilityID": "CVE-2026-109618"'
+4
+$ # broken: same image, scan settings filter it out
+$ trivy image -q -f json --severity LOW,MEDIUM php2shell:c7-holds | grep -c '"VulnerabilityID": "CVE-2026-109618"'
+0
+$ docker run --rm -e TRIVY_SEVERITY=LOW,MEDIUM -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.76.1 image -q -f json php2shell:c7-holds | grep -c '"VulnerabilityID": "CVE-2026-109618"'
+0
+$ cat scenarios/c7-filters/.trivyignore
+CVE-2026-109618
+$ docker run --rm -v "$PWD/scenarios/c7-filters/.trivyignore:/.trivyignore" -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.76.1 image -q -f json --ignorefile /.trivyignore php2shell:c7-holds | grep -c '"VulnerabilityID": "CVE-2026-109618"'
+0
+```
 
 
 If all these conditions are met, then Trivy will be able to effectively evaluate the vulnerability status of a package.

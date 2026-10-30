@@ -120,7 +120,7 @@ export function postBody(p) {
         <h1 class="text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">${esc(p.title)}</h1>
         <p class="mt-2 text-sm text-zinc-500">${postMeta(p)}${tags}</p>
       </header>
-      <div class="prose prose-zinc max-w-none dark:prose-invert prose-pre:bg-zinc-100 prose-pre:text-zinc-800 dark:prose-pre:bg-zinc-900 dark:prose-pre:text-zinc-200 prose-code:before:content-none prose-code:after:content-none">
+      <div class="prose prose-zinc max-w-none dark:prose-invert prose-code:before:content-none prose-code:after:content-none">
 ${p.html}
       </div>
     </article>

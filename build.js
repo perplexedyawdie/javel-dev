@@ -20,8 +20,15 @@ let usedIds = new Set();
 marked.use(
   markedHighlight({
     langPrefix: 'hljs language-',
-    highlight: (code, lang) =>
-      hljs.highlight(code, { language: hljs.getLanguage(lang) ? lang : 'plaintext' }).value,
+    highlight: (code, lang) => {
+      // terminal sessions: highlight `$ ` command lines as bash, leave their output as plain text
+      if (/^(bash|sh|shell|console)$/.test(lang) && /^\$ /m.test(code)) {
+        return code.split('\n').map((l) => l.startsWith('$ ')
+          ? `<span class="hljs-prompt">$</span> ${hljs.highlight(l.slice(2), { language: 'bash' }).value}`
+          : `<span class="hljs-output">${esc(l)}</span>`).join('\n');
+      }
+      return hljs.highlight(code, { language: hljs.getLanguage(lang) ? lang : 'plaintext' }).value;
+    },
   }),
   {
     renderer: {
