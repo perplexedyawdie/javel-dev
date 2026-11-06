@@ -233,4 +233,18 @@ ${posts.map((p) => `  <item>
 </rss>
 `);
 
+// llms.txt: a Markdown map of the site for AI agents (https://llmstxt.org/)
+write('llms.txt', `# ${site.name}
+
+> ${site.description}
+
+## Posts
+
+${posts.map((p) => `- [${p.title}](${site.url}${p.url}): ${p.description}`).join('\n')}
+
+## Optional
+
+${site.socials.map((s) => `- [${s.label}](${s.url})`).join('\n')}
+`);
+
 console.log(`Built ${posts.length} post(s) → ${DIST}/`);
