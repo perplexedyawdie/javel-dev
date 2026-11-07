@@ -2,6 +2,7 @@
 title: "Can Trivy flag PHP2SHELL in a container image?"
 date: 2026-10-30
 description: "Trivy can detect php2shell but there are a few cases where it can be missed. We'll explore them here."
+tags: [tips, trivy]
 ---
 
 Trivy detects vulnerable packages by first creating a Software Bill of Materials that contains all the packages installed on the distro via the package manager from the official distro pkg repo. It then checks the packages against the CVE advisory feed for the specific distro & release.

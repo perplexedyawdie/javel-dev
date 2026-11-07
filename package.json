@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "node build.js && tailwindcss -i src/styles.css -o dist/styles.css --minify",
-    "dev": "node dev.js"
+    "dev": "node dev.js",
+    "lint": "node scripts/lint-posts.js"
   },
   "dependencies": {
     "@fontsource/inter": "^5.3.0",
