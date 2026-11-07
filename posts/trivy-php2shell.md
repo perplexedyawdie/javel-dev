@@ -5,14 +5,14 @@ date: 2026-10-30
 
 Trivy detects vulnerable packages by first creating a Software Bill of Materials that contains all the packages installed on the distro via the package manager from the official distro pkg repo. It then checks the packages against the CVE advisory feed for the specific distro & release.
 
-![](/blog/trivy-php2shell/image-1.png)
+![Trivy's scan flow: your Ubuntu 24.04 image, then 1. list what's installed (the SBOM), then 2. check advisories for Ubuntu 24.04, then php8.3-cli is flagged](/blog/trivy-php2shell/image-1.png)
 
 This process seems pretty straightforward, however on closer look, there are actually a few conditions that must be met before a vulnerable pkg can be flagged. Let’s approach these as a series of questions that will provide all the details needed to evaluate a pkg.
 
 
 ## What packages are in the image?
 
-![](/blog/trivy-php2shell/image-2.png)
+![Three ways PHP gets into an image: apt install puts the package in the dpkg database so it's scanned; make install and rm -rf /var/lib/dpkg leave nothing in the database, so there's nothing to check](/blog/trivy-php2shell/image-2.png)
 
 Trivy only detects packages that are recorded in the package DB. Packages can be invisible to Trivy for two reasons:
 - if the package was built from source 
@@ -52,7 +52,7 @@ No OS package is detected. Make sure you haven't deleted any files that contain 
 
 ## Where does Trivy get CVE data?
 
-![](/blog/trivy-php2shell/image-3.png)
+![Known distros such as Ubuntu 24.04, Debian 12, Alpine 3.22 and RHEL 9 get their advisories looked up; an unknown OS like FakeOS 1.0 has no advisory set, so nothing is looked up](/blog/trivy-php2shell/image-3.png)
 
 A security advisory feed is published for each distro and its associated release. Trivy pulls this data to know which source packages to match against what’s captured in the SBOM.
 
@@ -81,7 +81,7 @@ $ trivy image -q -f json php2shell:c2-broken | grep -c '"VulnerabilityID": "CVE-
 
 ## Are all detected packages scanned?
 
-![](/blog/trivy-php2shell/image-4.png)
+![Decision: if a package's Maintainer is on the deny-list it's treated as third-party and skipped (e.g. docker-ce-cli); if not, it's official and scanned (e.g. php8.3-cli)](/blog/trivy-php2shell/image-4.png)
 
 Packages can either be installed from local sources, pulled from official distro owned repos or 3rd party repos. Trivy scans packages that are sourced from distro owned repos. On Ubuntu, it determines this by checking if the specified Maintainer exists on a provided deny list.
 
@@ -110,7 +110,7 @@ $ trivy image -q -f json php2shell:c3-broken | grep -c '"VulnerabilityID": "CVE-
 
 ## When is a package vulnerable?
 
-![](/blog/trivy-php2shell/image-5.png)
+![Timeline: when the CVE was published, supported Ubuntu 24.04 recorded it, but end-of-life Ubuntu 24.10 did not](/blog/trivy-php2shell/image-5.png)
 
 Advisory releases are updated with CVEs until they reach end of life. Trivy will flag all relevant CVEs detected using the advisory release associated with the distro. In this case, since Ubuntu 24.10 is EOL, it does not contain an updated list of CVEs and thus, PHP2SHELL would not be detected there.
 
@@ -140,7 +140,7 @@ $ trivy image -q -f json php2shell:c4-broken | grep -c '"VulnerabilityID": "CVE-
 
 ## How does Trivy tell a vulnerable version from a patched one?
 
-![](/blog/trivy-php2shell/image-6.png)
+![Version line: the installed .12 build sits below the fix at .13, so it's flagged; .13 and later are not flagged](/blog/trivy-php2shell/image-6.png)
 
 The security advisory also contains the specific version of a package that is patched and safe to install. If the version number installed on the system is less than the patched version, it will be flagged as vulnerable. In the event that no patched version is available, all versions of the package will be flagged.
 
@@ -164,7 +164,7 @@ $ trivy image -q -f json php2shell:c5-broken | grep -c '"VulnerabilityID": "CVE-
 
 ## Where does Trivy keep its CVE data?
 
-![](/blog/trivy-php2shell/image-7.png)
+![Timeline: the DB is downloaded on day 1, then a CVE is published; scans before the DB refresh miss it (the blind spot), and scans after the refresh catch it](/blog/trivy-php2shell/image-7.png)
 
 Trivy uses an offline copy of the CVE data during the scan. This creates the potential for a scenario where a CVE is released before the current data is refreshed. 
 
@@ -188,7 +188,7 @@ $ docker run --rm -v /var/run/docker.sock:/var/run/docker.sock php2shell:stale-d
 
 ## Why might a vulnerable package not show up in the report?
 
-![](/blog/trivy-php2shell/image-8.png)
+![php8.3-cli 8.3.6-0ubuntu0.24.04.12 only gets flagged after passing six filters: severity, fix status, .trivyignore, Rego policy, VEX and skip dirs, set by flags, env vars and policy or ignore files](/blog/trivy-php2shell/image-8.png)
 
 Trivy can be configured using flags, environmental variables or policies/ignore files. There can be cases where a specific config can lead to a vulnerability being filtered. Here are some examples:
 - **Severity** : if this is set to LOW/MEDIUM, any CVE rated outside of that will be dropped

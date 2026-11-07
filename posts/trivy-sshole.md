@@ -1,5 +1,5 @@
 ---
-title: "Can Trivy flag SSHOLE in Alpine images with the openssh package?"
+title: "Can Trivy flag SSHOLE in Alpine images?"
 date: 2026-11-06
 description: "Investigating the journey from disclosure to detection shows us how Trivy detects SSHOLE and also what can prevent it from flagging vulnerable openssh packages"
 tags: [tips, trivy]
