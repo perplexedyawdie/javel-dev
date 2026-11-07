@@ -70,18 +70,19 @@ ${page.body}
 export const postMeta = (p) =>
   `<time datetime="${p.date.toISOString().slice(0, 10)}">${fmtDate(p.date)}</time> · ${p.readingTime} min read`;
 
-function preview(p) {
+function preview(p, h) {
   return `<li>
   <a href="${p.url}" class="group block">
-    <h3 class="font-medium text-zinc-900 group-hover:underline underline-offset-4 dark:text-zinc-100">${esc(p.title)}</h3>
+    <h${h} class="font-medium text-zinc-900 group-hover:underline underline-offset-4 dark:text-zinc-100">${esc(p.title)}</h${h}>
     <p class="mt-0.5 text-sm text-zinc-500">${postMeta(p)}</p>
     <p class="mt-1.5 text-zinc-600 dark:text-zinc-400">${esc(p.description)}</p>
   </a>
 </li>`;
 }
 
-export const previewList = (posts) =>
-  `<ul class="space-y-8">${posts.map(preview).join('\n')}</ul>`;
+// h: heading level for post titles, one below the section heading they sit under
+export const previewList = (posts, h = 3) =>
+  `<ul class="space-y-8">${posts.map((p) => preview(p, h)).join('\n')}</ul>`;
 
 export function homeBody(site, latest) {
   const socials = site.socials
@@ -108,7 +109,7 @@ export function homeBody(site, latest) {
 
 export function blogIndexBody(posts) {
   return `    <h1 class="mb-10 text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">Blog</h1>
-    ${posts.length ? previewList(posts) : '<p class="text-zinc-500">Nothing here yet.</p>'}`;
+    ${posts.length ? previewList(posts, 2) : '<p class="text-zinc-500">Nothing here yet.</p>'}`;
 }
 
 export function postBody(p) {
