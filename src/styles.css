@@ -33,7 +33,7 @@
 .prose pre .line { display: block; padding-left: 2ch; text-indent: -2ch; }
 .hljs-prompt { color: #50fa7b; font-weight: 700; user-select: none; }
 .hljs-output { color: #f8f8f2; }
-.hljs-comment, .hljs-quote, .hljs-meta { color: #6272a4; font-style: italic; }
+.hljs-comment, .hljs-quote, .hljs-meta { color: #8b9bd0; font-style: italic; }
 .hljs-keyword, .hljs-selector-tag { color: #ff79c6; }
 .hljs-built_in, .hljs-type { color: #8be9fd; }
 .hljs-string, .hljs-regexp { color: #f1fa8c; }

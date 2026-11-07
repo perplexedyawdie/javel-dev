@@ -148,6 +148,29 @@ for (const size of [96, 192, 288]) {
   write(`${avatarBase}-${size}.webp`, await sharp('public' + site.avatar).resize(size, size).webp({ quality: 80 }).toBuffer());
 }
 
+// post images: WebP at 640/1280px wide plus width/height, so posts don't download full-size originals
+// or shift layout while images load. Only local images under public/ are touched.
+async function responsiveImages(html) {
+  const tags = [...html.matchAll(/<img src="(\/[^"]+\.(?:png|jpe?g|webp))"([^>]*)>/g)];
+  for (const [tag, src, rest] of tags) {
+    const file = 'public' + src;
+    if (!fs.existsSync(file)) continue;
+    const { width, height } = await sharp(file).metadata();
+    const base = src.replace(/\.\w+$/, '');
+    const srcset = [];
+    for (const w of [640, 1280].filter((w) => w < width)) {
+      write(`${base}-${w}.webp`, await sharp(file).resize(w).webp({ quality: 80 }).toBuffer());
+      srcset.push(`${base}-${w}.webp ${w}w`);
+    }
+    const responsive = srcset.length
+      ? ` srcset="${srcset.join(', ')}" sizes="(min-width: 42rem) 624px, calc(100vw - 3rem)"`
+      : '';
+    html = html.replace(tag, `<img src="${src}"${responsive} width="${width}" height="${height}"${rest}>`);
+  }
+  return html;
+}
+for (const p of posts) p.html = await responsiveImages(p.html);
+
 write('index.html', layout(site, {
   path: '/',
   title: site.title,
