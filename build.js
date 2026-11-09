@@ -4,7 +4,7 @@ import matter from 'gray-matter';
 import { marked } from 'marked';
 import { markedHighlight } from 'marked-highlight';
 import hljs from 'highlight.js';
-import { layout, postBody, homeBody, blogIndexBody, notFoundBody, esc } from './templates.js';
+import { layout, postBody, homeBody, blogIndexBody, aboutBody, notFoundBody, esc } from './templates.js';
 import sharp from 'sharp';
 import { renderCard, renderIcon } from './og.js';
 
@@ -217,6 +217,18 @@ for (const p of posts) {
   }));
 }
 
+// about page: words live in content/about.md (front matter holds the timeline, body the intro)
+const aboutSrc = matter(fs.readFileSync('content/about.md', 'utf8'));
+const about = { ...aboutSrc.data, html: marked.parse(aboutSrc.content) };
+write('about/index.html', layout(site, {
+  path: '/about/',
+  title: about.title,
+  description: about.description,
+  image: '/og/site.png',
+  body: aboutBody(about),
+  jsonld: { '@context': 'https://schema.org', '@type': 'ProfilePage', name: `About ${site.name}`, url: `${site.url}/about/`, description: about.description, mainEntity: person },
+}));
+
 write('404.html', layout(site, {
   path: '/404.html', title: 'Page not found', description: 'Page not found.', noindex: true, image: '/og/site.png',
   body: notFoundBody, jsonld: { '@context': 'https://schema.org', '@type': 'WebPage', name: 'Page not found' },
@@ -226,6 +238,7 @@ const day = (d) => d.toISOString().slice(0, 10);
 const urls = [
   { loc: '/', lastmod: posts[0] && day(posts[0].date) },
   { loc: '/blog/', lastmod: posts[0] && day(posts[0].date) },
+  { loc: '/about/' },
   ...posts.map((p) => ({ loc: p.url, lastmod: day(p.date) })),
 ];
 write('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>
@@ -260,6 +273,10 @@ ${posts.map((p) => `  <item>
 write('llms.txt', `# ${site.name}
 
 > ${site.description}
+
+## About
+
+- [About ${site.name}](${site.url}/about/): ${about.description}
 
 ## Posts
 

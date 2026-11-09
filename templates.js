@@ -52,6 +52,7 @@ ${card ? '<meta property="og:image:width" content="1200">\n<meta property="og:im
     <a href="/" class="font-semibold text-zinc-900 dark:text-zinc-100">${esc(site.name)}</a>
     <nav class="flex gap-5">
       <a href="/blog/" class="${link}">Blog</a>
+      <a href="/about/" class="${link}">About</a>
       <a href="/feed.xml" class="${link}">RSS</a>
     </nav>
   </header>
@@ -128,5 +129,52 @@ ${p.html}
     <a href="/blog/" class="${link} mt-12 inline-block text-sm">← All posts</a>`;
 }
 
-export const notFoundBody = `    <h1 class="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">Page not found</h1>
+// About page: a timeline whose thread gets thicker and shifts from grey to the accent stage by stage.
+// --w (thread width) and --mix (share of accent) are set per stage; the classes read them.
+const thread = 'border-[color-mix(in_oklab,var(--color-emerald-600)_var(--mix),var(--color-zinc-300))] dark:border-[color-mix(in_oklab,var(--color-emerald-400)_var(--mix),var(--color-zinc-700))]';
+const node = 'bg-[color-mix(in_oklab,var(--color-emerald-600)_var(--mix),var(--color-zinc-300))] dark:bg-[color-mix(in_oklab,var(--color-emerald-400)_var(--mix),var(--color-zinc-700))]';
+const lineAt = 'absolute left-[7px] top-3 -bottom-2 -translate-x-1/2 border-l-[length:var(--w)]';
+
+export function aboutBody(about) {
+  const last = about.stages.length - 1;
+  const stages = about.stages.map((s, i) => {
+    const vars = `--w:${(1 + i * 0.5).toFixed(1)}px;--mix:${Math.round((i / last) * 100)}%`;
+    const dot = i === last
+      ? 'h-3.5 w-3.5 bg-emerald-600 ring-4 ring-emerald-600/20 dark:bg-emerald-400 dark:ring-emerald-400/20'
+      : `h-2.5 w-2.5 left-[2px] top-[7px] ${node}`;
+    return `      <li class="relative pb-10 pl-9" style="${vars}">
+        <span aria-hidden="true" class="${lineAt} ${thread}"></span>
+        <span aria-hidden="true" class="absolute ${i === last ? 'left-0 top-[5px]' : ''} rounded-full ${dot}"></span>
+        <h3 class="font-semibold text-zinc-900 dark:text-zinc-100">${esc(s.role)}</h3>
+        <p class="mt-1 leading-relaxed">${esc(s.text)}</p>
+        <p class="mt-2 text-sm text-zinc-500 dark:text-zinc-400">${s.skills.map(esc).join(' · ')}</p>
+      </li>`;
+  }).join('\n');
+  const n = about.next;
+  return `    <h1 class="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">${esc(about.title)}</h1>
+    <div class="mt-6 space-y-4 leading-relaxed [&_ol]:list-decimal [&_ol]:space-y-1 [&_ol]:pl-6">
+${about.html}
+    </div>
+    <section class="mt-14">
+      <h2 class="mb-8 text-sm font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">${esc(about.timeline)}</h2>
+      <ol>
+${stages}
+        <li class="relative pl-9">
+          <span aria-hidden="true" class="absolute left-[7px] top-6 bottom-0 -translate-x-1/2 border-l-2 border-dashed border-emerald-600 dark:border-emerald-400"></span>
+          <span aria-hidden="true" class="absolute left-0 top-[5px] h-3.5 w-3.5 rounded-full border-2 border-emerald-600 bg-white dark:border-emerald-400 dark:bg-zinc-950"></span>
+          <h3 class="font-semibold text-zinc-900 dark:text-zinc-100">What's next?</h3>
+          <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Proposed research</p>
+          <p class="mt-3 font-medium text-zinc-900 dark:text-zinc-100">${esc(n.title)}</p>
+          <p class="mt-4 text-sm font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Research questions</p>
+          <ol class="mt-2 list-decimal space-y-2 pl-5 leading-relaxed">
+            ${n.questions.map((q) => `<li>${esc(q)}</li>`).join('\n            ')}
+          </ol>
+          <p class="mt-4 text-sm font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Case study</p>
+          <p class="mt-2 leading-relaxed">${esc(n.case)}</p>
+        </li>
+      </ol>
+    </section>`;
+}
+
+export const notFoundBody =`    <h1 class="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">Page not found</h1>
     <p class="mt-3"><a href="/" class="${link}">Back to the homepage</a></p>`;

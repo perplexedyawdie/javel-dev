@@ -10,7 +10,7 @@ module.exports = {
   ci: {
     collect: {
       staticDistDir: './dist',
-      url: ['/', '/blog/', ...posts].map((p) => `http://localhost${p}`),
+      url: ['/', '/blog/', '/about/', ...posts].map((p) => `http://localhost${p}`),
       numberOfRuns: 1,
     },
     assert: {
