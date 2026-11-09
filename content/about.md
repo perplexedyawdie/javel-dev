@@ -19,7 +19,7 @@ stages:
       - Adobe ColdFusion
       - Python
   - role: Frontend Developer
-    text: You can't predict how a real person will use an interface, and it's easy to design for how I think rather than how they think. So things that can make sense to the builder can still confuse, exclude or lose the actual user.
+    text: You can't predict how a real person will use an interface, and it's easy to design for how you think rather than how they think. So things that can make sense to the builder can still confuse, exclude or lose the actual user.
     skills:
       - HTML, CSS and JavaScript
       - jQuery
@@ -31,7 +31,7 @@ stages:
       - daisyUI
       - Linting
   - role: Mobile Developer
-    text: Features had to be designed around what could fail. Here, constraints ruled, since the device, network & platform set limits we can't negotiate with & users tend to expect an app to just work.
+    text: Features had to be designed around what could fail. Here, constraints ruled, since the device, network & platform set limits we couldn't negotiate with & users tend to expect an app to just work.
     skills:
       - Ionic with Capacitor
       - React Native (Expo)
@@ -77,7 +77,7 @@ next:
   case: "Containers and virtualization: why the same problems kept coming back, the context around each solution, and the trade-offs and market forces behind them."
 ---
 
-I work with a simple definition for the word problem:
+I think about problems using a simple structure:
 
 1. Context about the current situation.
 2. A goal someone in that situation wants to achieve.
